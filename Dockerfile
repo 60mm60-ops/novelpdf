@@ -1,6 +1,6 @@
 FROM node:20-slim
 
-# Playwrightの依存関係をインストール
+# Playwrightの依存関係と日本語フォントをインストール
 RUN apt-get update && apt-get install -y \
     libnss3 \
     libnspr4 \
@@ -17,6 +17,8 @@ RUN apt-get update && apt-get install -y \
     libasound2 \
     libpango-1.0-0 \
     libcairo2 \
+    fonts-noto-cjk \
+    fonts-noto-cjk-extra \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
