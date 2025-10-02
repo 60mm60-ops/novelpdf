@@ -39,3 +39,5 @@ RUN npm run build
 EXPOSE 3000
 
 CMD ["npm", "start"]
+
+# Force rebuild 2025-10-02
