@@ -32,7 +32,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<PdfGenera
     // Playwrightブラウザを起動
     browser = await chromium.launch({
       headless: true,
-      timeout: 15000, // 15秒タイムアウト
+      timeout: 15000,
       args: [
         '--no-sandbox',
         '--disable-setuid-sandbox',
@@ -81,7 +81,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<PdfGenera
         bottom: `${settings.marginBottom}mm`,
         left: `${settings.marginLeft}mm`
       },
-      pageRanges: '',  // 空白ページを防ぐ
+      pageRanges: '',
     }
 
     // PDF生成
@@ -157,9 +157,9 @@ function generateManuscriptHtml(settings: any): string {
   // フォントファミリーの取得
   const getFontFamily = (fontType: string): string => {
     const fonts = {
-      'mincho': '"Noto Serif JP", "Yu Mincho", "YuMincho", "Hiragino Mincho Pro", "ヒラギノ明朝 Pro W3", "メイリオ", serif',
-      'gothic': '"Noto Sans JP", "Yu Gothic", "YuGothic", "Hiragino Kaku Gothic Pro", "ヒラギノ角ゴ Pro W3", "メイリオ", sans-serif',
-      'mono': '"Noto Sans Mono", "Yu Gothic", "YuGothic", "Osaka-Mono", "MS Gothic", monospace'
+      'mincho': '"Noto Serif CJK JP", serif',
+      'gothic': '"Noto Sans CJK JP", sans-serif',
+      'mono': '"Noto Sans CJK JP", monospace'
     }
     return fonts[fontType as keyof typeof fonts] || fonts.mincho
   }
@@ -169,9 +169,7 @@ function generateManuscriptHtml(settings: any): string {
 
   // 段組みコンテンツの生成
   const generateColumnContent = () => {
-    // CSS column-countを使用する場合は全ての段落を連続して配置
     return paragraphs.map((paragraph: string, index: number) => {
-      // 縦中横処理を適用
       const processedParagraph = processSimpleTateChuYoko(paragraph.replace(/\n/g, '<br>'));
       return `<p class="paragraph">${processedParagraph}</p>`;
     }).join('')
@@ -184,13 +182,6 @@ function generateManuscriptHtml(settings: any): string {
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>${settings.title || '原稿'}</title>
-  
-  <!-- Google Fonts -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@200;300;400;500;600;700;900&display=swap" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@100;300;400;500;700;900&display=swap" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Mono:wght@100;200;300;400;500;600;700;800;900&display=swap" rel="stylesheet">
   
   <style>
     @page {
@@ -258,10 +249,13 @@ function generateManuscriptHtml(settings: any): string {
       ${settings.columns > 1 ? `
         column-count: ${settings.columns};
         column-gap: ${settings.columnGap}mm;
-        column-fill: balance;
+        column-fill: auto;
         column-rule: none;
       ` : ''}
-      ${settings.writingMode === 'vertical' ? 'writing-mode: vertical-rl;' : ''}
+      ${settings.writingMode === 'vertical' ? `
+        writing-mode: vertical-rl;
+        height: calc(100vh - ${settings.marginTop + settings.marginBottom}mm);
+      ` : ''}
       page-break-inside: avoid;
       overflow: visible;
     }
@@ -272,7 +266,7 @@ function generateManuscriptHtml(settings: any): string {
     }
     
     .paragraph {
-      margin-bottom: ${settings.fontSize * 1.2}pt;
+      margin-bottom: ${settings.fontSize * 1.5}pt;
       ${settings.writingMode === 'horizontal' ? 'text-indent: 1em;' : ''}
       word-wrap: break-word;
       overflow-wrap: break-word;
@@ -280,6 +274,7 @@ function generateManuscriptHtml(settings: any): string {
       page-break-inside: avoid;
       orphans: 2;
       widows: 2;
+      line-height: ${settings.lineHeight * 1.2};
     }
     
     /* 縦中横のスタイル */
@@ -311,7 +306,6 @@ function generateManuscriptHtml(settings: any): string {
         text-combine-upright: none;
       }
       
-      /* 小書き文字の調整 */
       .paragraph::before {
         content: "";
       }
